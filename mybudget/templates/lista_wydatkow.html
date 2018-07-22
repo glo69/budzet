@@ -1,0 +1,129 @@
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow
+{% endblock %}
+{% block header %}
+
+<h3><span class="label label-default">Lista wydatkow za okres {{wynik.Okres}}</span></h3>
+{% endblock %}
+
+{% block content %}
+   
+<div class="row">
+
+{% if wynik.historia == 'False' %}
+
+<div class="col-sm-3" style="background-color:white;">
+Wydatek w aktualnym okresie:
+</br>
+<font size=150><center>{{wynik.procent}}</center> </font>
+
+</div>
+
+{% endif %}
+
+
+
+<div class="col-sm-4" style="background-color:white;">
+<table class="table table-condensed">
+{% for value, value2 in dane.iteritems %}
+<tr>
+		<td><a href="/chart/{{value}}/{{wynik.najnowszy}}/{{wynik.najstarszy}}"> {{value}} </a></td>
+		<td>{{ value2}} PLN</td>
+		
+</tr>
+{% endfor %}
+</table>
+
+</div>
+
+<div class="col-sm-4" style="background-color:white;">
+
+<table class="table table-condensed">
+
+<tr>
+        <td><a href="/chart/Dochod/{{wynik.najnowszy}}/{{wynik.najstarszy}}"> Przychod:</td>
+        <td>{{wynik.przychod}} PLN </a></td>
+</tr>
+        <td>Rozchod:</td>
+        <td>{{wynik.suma}} PLN</td>
+</tr>
+        <td>Wolne srodki:</td>
+        <td>{{wynik.wolne_srodki}} PLN</td>
+</tr>
+
+{% if wynik.historia == 'False' %}
+
+</tr>
+        <td>Oszczednosci:</td>
+        <td>{{wynik.oszczednosci}} PLN</td>
+</tr>
+        <td>Wydatki:</td>
+        <td>{{wynik.wydatek}} PLN</td>
+</tr>
+
+        <td>Wolne srodki w okresie:</td>
+        <td>{{wynik.wolne_srodki_aktualny}} PLN</td>
+</tr>
+        <td>Sredni wydatek dzienny:</td>
+        <td>{{wynik.sredni_wydatek}} PLN</td>
+</tr>
+        <td>Poczatek okresu:</td>
+        <td>{{wynik.data}}</td>
+</tr>
+        <td>Numer dnia w okresie:</td>
+        <td>{{wynik.numer_dnia}}</td>
+</tr>
+        <td>Prognoza 30 dni:</td>
+        <td>{{ wynik.przewidywane_wydatki_w_okresie }} PLN</td>
+</tr>
+{% endif %}
+</table>
+
+</div>
+</div>
+
+
+<div id="chart_container" style="width:80%;">
+<!--javascript for charts
+-->
+<script>
+
+$(function () {
+$('#chart_container').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Struktura wydatkow'},
+xAxis: {categories: [ '{{ dane_wykres.categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+plotOptions: {bar:{dataLabels: {enabled: true}}},
+series: [{name: 'Wydatki', data:[{{ dane_wykres.cat|join:","}}]}]
+});
+});
+</script>
+</div>
+
+<div id="chart_container2" style="width:80%; height:600px">
+<script>
+$(function () {
+$('#chart_container2').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Wydatki wedlug podtypu'},
+xAxis: {categories: [ '{{ dane_wykres_szczegoly.categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+plotOptions: {bar:{dataLabels: {enabled: true}}},
+series: [{name: 'Wydatki', data:[{{ dane_wykres_szczegoly.cat|join:","}}]}]
+});
+});
+
+</script>
+</div>
+<button onclick="window.location.href = '/history_data/'">Dane wejsciowe - tabela</button>
+{% endblock %}
+
+
+
+{% block footer %}
+user: {{request.user.username}} 
+{% endblock %}
+    
+

@@ -1,0 +1,35 @@
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow2
+{% endblock %}
+{% block header %}
+user: {{request.user.username}}  
+{% endblock %}
+{% block content %}
+    
+<br/>
+<br/>
+    <table border="2">
+<tr>
+<td>ID</td>
+<td>DATA</td>
+<td>TYP WYDATKU</td>
+<td>KOMENTARZ</td>
+<td>CENA</td>
+<td>AUTOR</td>
+</tr>
+    {% for post in posts %}
+		<tr>
+	    <td>{{ post.id}}</td>
+		<td>{{ post.data_utworzenia }}</td>
+		<td>{{ post.typ}}</td>
+        <td>{{ post.komentarz }} </td>
+        <td>{{ post.cena}}</td>
+        <td>{{ post.autor }}</td>
+        <td>{{ post.okres}}</td>
+        </tr>
+{% endfor %}
+    </table>
+{% endblock %}
+    
+

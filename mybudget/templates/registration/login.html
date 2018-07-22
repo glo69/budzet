@@ -1,0 +1,33 @@
+
+{% extends "budzet.html"%}
+{%block title%}
+login
+{% endblock %}
+{% block header %}
+{% endblock %}
+{% block content %}
+<center>
+<h2>_mybudget</h2>
+<p>
+<div style="margin-left:35%;margin-right:35%;">
+<fieldset>
+    <form method="post" action=".">{% csrf_token %}
+    <div style="text-align:left";>{{ form.as_p }}</div>
+    <input type="hidden" name="next" value="/new" />
+    <input type="submit" value="Sign in"/>    
+    <input type="reset" value="Default values"/>
+  </form>
+</fieldset>
+</div>
+</p>
+</center>  
+
+<div style="text-align:center;"><a href="/adduser">Register new user</a></div>
+<div style="text-align:center;"><a href="/admin">Administrator panel</a></div>
+<div style="text-align:center;"><a href="/temp_data">Temperatura - piec</a></div>
+{% endblock %}
+
+{% block footer %}
+v0.5-8 (2018-01-14) 
+{% endblock %}
+

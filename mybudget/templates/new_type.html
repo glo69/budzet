@@ -1,0 +1,21 @@
+{% extends "budzet.html"%}
+{%block title%}
+Nowy typ
+{% endblock %}
+{% block header %}
+<h3><span class="label label-default">Edycja typu</span></h3> 
+{% endblock %}
+{% block content %}
+
+    <form method="POST" class="post-form">{% csrf_token %}
+        {{ form.as_p }}
+        </br>
+        <button type="submit" class="save btn btn-default">Zapisz zmiany</button> 
+     </form> 
+ </br>
+  
+{% endblock %}
+
+{% block footer %}
+user: {{request.user.username}} 
+{% endblock %}

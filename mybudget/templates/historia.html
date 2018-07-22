@@ -1,0 +1,71 @@
+{% extends "budzet.html"%}
+{%block title%}
+Historia i raporty
+{% endblock %}
+
+{% block header %}
+<h3><span class="label label-default">Historia i raportowanie</span></h3> 
+{% endblock %}
+
+{% block content %}
+
+
+<table class="table table-condensed">
+<tr>
+        <td>Dochody calkowite:</td>
+        <td>{{wynik.przychod_calkowity}} PLN</td>
+</tr>
+        <td>Wydatki calkowite:</td>
+        <td>{{wynik.wydatek_calkowity}} PLN</td>
+</tr>
+        <td>Oszczenosci calkowite:</td>
+        <td>{{wynik.oszczednosci_calkowite}} PLN</td>
+</tr>
+        <td>Wolne srodki:</td>
+        <td>{{wynik.wolne_srodki}} PLN</td>
+</tr>
+</table>
+</div>
+
+    </br>
+    Raport szczególowy za dowolny okres od - do
+<form action="/range_date/" method="post">
+    {% csrf_token %}
+    <input id="start_date" type="date" name="start_date" >
+    <input id="end_date" type="date" name="end_date" >
+    </br>
+    <input onclick="this.disabled=true,this.form.submit()" class="btn btn-success" type="submit" value="Wyswietl raport" />
+</form>
+</br>
+
+Porównanie dwóch okresów od - do
+<form action="/compare_dates/" method="post">
+    {% csrf_token %}
+    <input id="start_date" type="date" name="start_date" >
+    <input id="end_date" type="date" name="end_date" >
+    </br>
+    <input id="start_date1" type="date" name="start_date1" >
+    <input id="end_date1" type="date" name="end_date1" >
+    </br>
+    <input onclick="this.disabled=true,this.form.submit()" class="btn btn-success" type="submit" value="Wyswietl porownanie" />
+</form>
+
+    </br>
+   
+</br>
+
+Wyswietl wszystkie wpisy
+</br>
+    <a href="/history_all" button onclick="this.disabled=true,this.form.submit()" class="btn btn-success" role="button">Historia pelna</a>
+
+</br> </br>
+Eksport bazy do pliku csv
+</br>
+<a href="/csv_file" button onclick="this.disabled=true,this.form.submit()" class="btn btn-success" onclick="window.location.href = '/csv_file/'">Eksport</a>   
+</br> 
+{% endblock %}
+    
+{% block footer %}
+
+user: {{request.user.username}} 
+{% endblock %}

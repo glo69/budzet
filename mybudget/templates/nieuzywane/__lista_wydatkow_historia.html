@@ -1,0 +1,97 @@
+{% extends "budzet.html"%}
+{%block title%}
+Lista wydatkow za okres {{wynik.Okres}}
+{% endblock %}
+{% block header %}
+user: {{request.user.username}}  
+{% endblock %}
+{% block content %}
+
+  
+    <h3>Lista wydatkow za okres {{wynik.Okres}}</h3>
+
+<table border="2">  
+{% for value, value2 in dane.iteritems %}
+	<tr>
+		<td>{{value}}</td>
+		<td>{{ value2}}</td>
+	</tr>
+{% endfor %}
+</table>
+
+<div id="chart_container" style="width:60%; height:400px;"></div>
+<!--javascript for charts
+-->
+<script>
+$(function () {
+$('#chart_container').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Struktura wydatkow'},
+xAxis: {
+categories: [ '{{ dane_wykres.categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+series: [{name: 'Wydatki', 
+data:[{{ dane_wykres.cat|join:","}}]
+}]
+});
+});
+</script>
+<br/>
+    <table border="2" id="table1" class="sortable" >
+<tr>
+<td>ID</td>
+<td>DATA</td>
+<td>TYP WYDATKU</td>
+<td>KOMENTARZ</td>
+<td>CENA</td>
+<td>AUTOR</td>
+</tr>
+    {% for post in posts %}
+		<tr>
+	    <td><a href="/details/{{ post.id }}">{{ post.id }}</a></td>
+		<td>{{ post.data_utworzenia }}</td>
+		<td>{{ post.typ}}</td>
+        <td>{{ post.komentarz }} </td>
+        <td>{{ post.cena}}</td>
+        <td>{{ post.autor }}</td>
+        <td>{{ post.okres}}</td>
+        </tr>
+{% endfor %}
+<tr>
+		<td colspan="4">Suma:</td>
+		<td id="table8Tot1" style="background-color:#FFFFCC;"></td>
+		<td></td>
+	</tr>	
+    </table>
+    
+<script language="javascript" type="text/javascript">
+//<![CDATA[
+    
+    var table_Props =  {    col_operation: {
+       id: ["table8Tot1"],
+       col: [4],
+       operation: ["sum"],
+       write_method: ["innerHTML","setValue"]
+    },
+    rows_always_visible: [grabTag(grabEBI('table1'),"tr").length],	
+							btn_reset: true,
+							rows_counter: true,
+							rows_counter_text: "Ilosc wpisow: ",
+							btn: true,
+							btn_reset_text: "Usun filtry",  
+							col_0: "none",
+							col_1: "none",
+                            col_2: "select",
+                            col_4: "none",
+                            col_5: "none",
+                            col_6: "none",
+                            
+                            display_all_text: " [ Filtr wylaczony ] ",
+                            sort_select: true 
+                        };
+    setFilterGrid( "table1",table_Props );
+//]]>
+</script>
+{% endblock %}
+    
+

@@ -1,0 +1,22 @@
+{% extends "budzet.html"%}
+{%block title%}
+login
+{% endblock %}
+{% block header %}
+{% endblock %}
+{% block content %}
+<center>
+<h2>BUDZET - add new user</h2>
+
+<p>
+<div style="margin-left:35%;margin-right:35%;">
+<fieldset>
+<form method="post" action="">{% csrf_token %}
+    <div style="text-align:left";>{{ form.as_p}}</div>
+    <input type="submit" value="Create new user account" />
+</form>
+</fieldset>
+<div style="text-align:center;"><a href="/login">back</a></div>
+</center>
+</p>
+{% endblock %}

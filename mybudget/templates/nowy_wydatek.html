@@ -1,0 +1,71 @@
+{% extends "budzet.html"%}
+
+
+
+{%block title%}
+Dodaj nowy wydatek
+{% endblock %}
+{% block header %}
+
+<h3><span class="label label-default">Nowy wydatek</span></h3> 
+{% endblock %}
+{% block content %}
+
+    <h4>
+    <form method="POST" class="post-form">{% csrf_token %}
+        {{ form.as_p }}
+        <input id="kolejny_wpis" type="checkbox" name="kolejny_wpis" > Zaznacz aby wyswieltic aktualny raport </br>
+        </br>
+        <button onclick="this.disabled=true,this.form.submit()" class="btn btn-success" type="submit" class="save btn btn-default">Zapisz wydatek</button> 
+
+     </form>
+</br> 
+
+ <div class="progress">
+  <div class="progress-bar progress-bar-success" role="progressbar" style="width:{{wynik.procent_oszczednosci}}%"> Oszczednosci {{wynik.procent_oszczednosci}}%
+  </div>
+  <div class="progress-bar progress-bar-warning" role="progressbar" style="width:{{wynik.procent_wydatek}}%"> Wydatki {{wynik.procent_wydatek}}%
+  </div>
+</div>
+Wolne srodki: {{wynik.wolne_srodki}} PLN </br> </br> 
+Suma oszczednosci: {{wynik.oszczednosci}} PLN </br> </br> 
+Przychod 30 dni: {{wynik.przychod_30dni}} PLN </br> </br> 
+Wydatki 30 dni: {{wynik.wydatek_30dni}} PLN </br> </br>
+
+</h4>
+
+
+</br>
+Ostatni wprowadzony wydatek to:
+<table class="table table-condensed">
+<tr>
+<td>ID</td>
+<td><b><a href="/details/{{ post.id }}"> {{ post.id }}</span> </a></b></td>
+</tr>
+<tr>
+<td>DATA</td>
+<td>{{ post.data_utworzenia }}</td>
+</tr>
+<tr>
+<td>TYP WYDATKU</td>
+<td>{{ post.typ}}</td>
+</tr>
+<tr>
+<td>PODTYP WYDATKU</td>
+<td>{{ post.podtyp}}</td>
+</tr>
+<tr>
+<td>KOMENTARZ</td>
+<td>{{ post.komentarz }} </td>
+</tr>
+<tr>
+<td>CENA</td>
+ <td>{{ post.cena}}</td>
+ </tr>
+</table>
+
+{% endblock %}
+
+{% block footer %}
+user: {{request.user.username}} 
+{% endblock %}

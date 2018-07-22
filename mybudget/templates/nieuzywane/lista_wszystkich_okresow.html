@@ -1,0 +1,64 @@
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow
+{% endblock %}
+{% block header %}
+Witaj {{request.user.username}} ! 
+
+<button onclick="window.location.href = '/new'">Nowy wydatek</button>
+<button onclick="window.location.href = '/actual_list'">Lista wydatkow z aktualnego okresu</button>
+<button onclick="window.location.href = '/list'">Historia z wszystkich okresow</button>
+<button onclick="window.location.href = '/logout'">Wyloguj sie</button>
+
+{% endblock %}
+{% block content %}
+    
+    <h3>Lista wydatkow za okres {{dane.Okres}}</h3>
+
+<table border="2">  
+	<tr>
+		<td>Spozywka</td>
+		<td>{{ dane.Spozywka.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Leki</td>
+		<td>{{ dane.Leki.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Ubrania</td>
+		<td>{{ dane.Ubrania.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Samochod</td>
+		<td>{{ dane.Samochod.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Zabawki</td>
+		<td>{{ dane.Zabawki.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Rozrywka</td>
+		<td>{{ dane.Rozrywka.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Oszczednosci</td>
+		<td>{{ dane.Oszczednosci.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Inne</td>
+		<td>{{ dane.Inne.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td>Suma</td>
+		<td>{{ dane.Suma.cena__sum}}</td>
+	</tr>
+</table>
+
+{% endblock %}
+
+    
+

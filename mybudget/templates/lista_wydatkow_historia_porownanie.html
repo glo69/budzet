@@ -1,0 +1,63 @@
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow
+{% endblock %}
+{% block header %}
+<h3><span class="label label-default">Porownanie wydatkow z zakreu dat: {{wynik.Okres}}</span></h3>  
+{% endblock %}
+{% block content %}
+
+<table border="0">
+<td>
+
+<table class="table table-condensed">  
+{% for value, value2 in dane.iteritems %}
+<tr>
+<td>{{value}}</td>
+<td>{{ value2}}</td>
+</tr>
+{% endfor %}
+<tr>
+<td>Suma</td>
+<td>{{ wynik.suma }}</td>
+</tr>
+
+</table>
+</td> 
+
+<td> 
+<table class="table table-condensed"> 
+{% for value, value2 in dane1.iteritems %}
+<tr>
+<td>{{ value2}}</td>
+</tr>
+{% endfor %}
+<td>{{ wynik.suma1 }}</td>
+</table>
+</td>
+
+</table> 
+
+<div id="chart_container" style="width:60%; height:400px;"></div>
+<!--javascript for charts
+-->
+<script>
+$(function () {
+$('#chart_container').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Struktura wydatkow'},
+xAxis: {
+categories: [ '{{ dane_wykres.categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+series: [{name: ' {{ wynik.data }}', 
+data:[{{ dane_wykres.cat2|join:","}}]
+},{name: '{{ wynik.data1 }}', 
+data:[{{ dane_wykres.cat|join:","}}]
+}]
+});
+});
+</script>
+
+{% endblock %}
+    
+

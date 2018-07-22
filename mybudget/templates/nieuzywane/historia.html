@@ -1,0 +1,71 @@
+    Witaj {{request.user.username}} ! <a href="/new">Nowy wydatek</a> <a href="/actual_list">Lista wydatkow z aktualnego miesiaca</a> <a href="/list">Lista WSZYSTKICH wydatkow</a> <a href="/logout/">logout</a>
+    <h3>Lista wydatkow za okres {{dane.Okres}}</h3>
+
+<table border="2">  
+	<tr>
+		<td>Spozywka</td>
+		<td>{{ dane.Spozywka.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Leki</td>
+		<td>{{ dane.Leki.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Ubrania</td>
+		<td>{{ dane.Ubrania.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Samochod</td>
+		<td>{{ dane.Samochod.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Zabawki</td>
+		<td>{{ dane.Zabawki.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Rozrywka</td>
+		<td>{{ dane.Rozrywka.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Oszczednosci</td>
+		<td>{{ dane.Oszczednosci.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td>Inne</td>
+		<td>{{ dane.Inne.cena__sum}}</td>
+	</tr>
+	<tr>
+		<td></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td>Suma</td>
+		<td>{{ dane.Suma.cena__sum}}</td>
+	</tr>
+</table>
+<br/>
+    <table border="2">
+<tr>
+<td>ID</td>
+<td>DATA</td>
+<td>TYP WYDATKU</td>
+<td>KOMENTARZ</td>
+<td>CENA</td>
+<td>AUTOR</td>
+</tr>
+    {% for post in posts %}
+		<tr>
+	    <td>{{ post.id}}</td>
+		<td>{{ post.data_utworzenia }}</td>
+		<td>{{ post.typ}}</td>
+        <td>{{ post.komentarz }} </td>
+        <td>{{ post.cena}}</td>
+        <td>{{ post.autor }}</td>
+        <td>{{ post.okres}}</td>
+
+        </tr>
+{% endfor %}
+
+    </table>
+    
+

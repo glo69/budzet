@@ -1,0 +1,475 @@
+from django.shortcuts import render, redirect
+from django.views.generic import TemplateView, View
+from .forms import EnterForm, DetailForm, UserForm
+from models import Baza_wydatkow, Typ_wydatku
+from django.utils import timezone
+from django.http import HttpResponseRedirect, HttpResponse
+import datetime
+from django.contrib.auth import logout, login
+from django.db.models import Sum
+from datetime import date
+from subprocess import call
+from django.contrib.auth.models import User
+
+# Create your views here.
+### FUNKCJE WEWNETRZNE
+def aktualny_okres():
+     wynik = 'aktualny'
+     return wynik
+    
+def ilosc_dni():
+    days = 30
+    return days  
+	
+def numer_dnia():
+    dzis = datetime.datetime.now(timezone.utc)
+    aktualny ='aktualny'	
+    posts = Baza_wydatkow.objects.filter(data_utworzenia__lte=timezone.now()).exclude (okres = aktualny).latest('data_utworzenia')
+    ostatni= posts.data_utworzenia
+    numer = dzis - ostatni
+    numer = int(numer.days)
+    return numer
+
+def poczatek_aktualnego_okresu():
+    aktualny ='aktualny'
+    posts = Baza_wydatkow.objects.filter(data_utworzenia__lte=timezone.now()).exclude (okres = aktualny).latest('data_utworzenia')
+    ostatni= posts.data_utworzenia
+    if ostatni =='None':
+        ostatni = 'brak aktualnych wpisow'
+    return ostatni
+
+def nazwa_nowego_okresu():
+    dzis = datetime.datetime.now(timezone.utc)
+    rok = dzis.strftime("%Y")
+    miesiac = dzis.strftime("%m")
+    aktualny ='aktualny'	
+    posts = Baza_wydatkow.objects.filter(data_utworzenia__lte=timezone.now()).exclude (okres = 'aktualny').latest('data_utworzenia')
+    if bool(posts) == False:
+	nazwa_okresu = miesiac + rok
+    else:
+        nazwa_okresu = posts.okres
+        nazwa_okresu_miesiac = int (nazwa_okresu [:2])
+        nazwa_okresu_rok = nazwa_okresu [2:6]
+        if rok == nazwa_okresu_rok:
+	    nazwa_okresu_miesiac = nazwa_okresu_miesiac + 1
+	    nazwa_okresu = '0' + str(nazwa_okresu_miesiac) + rok
+        else:
+	    nazwa_okresu_miesiac = '01' + rok
+    return nazwa_okresu
+###REQUESTY   
+
+def end_period(request):
+    username = None
+    #if request.user.is_authenticated():
+    nowy_okres = nazwa_nowego_okresu()
+    posts = Baza_wydatkow.objects.filter(autor=request.user).filter(okres='aktualny')
+    i = 0
+    for post in posts:
+	post.okres = nowy_okres
+	post.save()
+	i = i + 1
+    nazwa = nowy_okres
+    if i > 0:
+	return HttpResponse ('Zamknieto okres aktualny. Zostal zapisany pod nazwa: ' + nazwa + '''</br>
+	    <button onclick="window.location.href = '/period_list'">OK</button>''')
+    else:
+	return HttpResponse('''Brak wpisow w okresie aktualnym do zamkniecia </br>
+	    <button onclick="window.location.href = '/new'">Cofnij</button>''')
+
+#wylogowanie    
+def logout_page(request):
+    logout(request)
+    return HttpResponseRedirect("/login")
+
+
+#nowy wydatek              
+def post_new(request):
+    username = None
+    if request.user.is_authenticated():
+        username = request.user.username
+	wynik = {}
+	form = EnterForm()
+	post = Baza_wydatkow.objects.last()
+
+	#dodano
+	suma =(Baza_wydatkow.objects.filter(okres= 'aktualny').filter(autor=request.user).aggregate(Sum('cena')).values()[0])
+	przychod =(Baza_wydatkow.objects.filter(okres= 'aktualny').filter(autor=request.user).filter(dochod = False).aggregate(Sum('cena')).values()[0])
+        if suma == None:
+	     suma = 0
+        if przychod == None:
+             przychod = 0
+             
+	wynik["suma"] = (suma)
+	wynik["Przychod"] = (przychod)
+	if suma > 0 and przychod >0:
+             wynik["Procent"] = float(suma * 100 / przychod)
+	     wynik["ilosc_dni"] = ilosc_dni()
+             wynik["numer_dnia"] = numer_dnia()
+             if (wynik["numer_dnia"]) > wynik["ilosc_dni"]:
+                 wynik["ilosc_dni"] = wynik["numer_dnia"]
+             wynik["sredni_wydatek"] = int (wynik["suma"] / int(wynik["ilosc_dni"]))
+             wynik["sredni_wydatek_w_okresie_do_dzis"] = int (wynik["suma"] / int(wynik["numer_dnia"]))
+             wynik["przewidywane_wydatki_w_okresie"] = int (wynik["suma"] / (wynik["numer_dnia"])*(wynik["ilosc_dni"]))
+             wynik["data"] = poczatek_aktualnego_okresu()    
+        if request.method == "POST":
+            form = EnterForm(request.POST)
+            if form.is_valid():
+
+		wartosc = request.POST.get('kolejny_wpis')
+                dzis = datetime.datetime.now()
+                post = form.save(commit=False)
+                post.autor = request.user
+                post.rok = dzis.strftime("%Y")
+                post.tydzien = dzis.strftime("%W")
+                post.miesiac = dzis.strftime("%m")
+                post.dzien = dzis.strftime("%d")
+                post.okres = aktualny_okres()
+                typy_dochod = Typ_wydatku.objects.filter(dochod = True)
+                typ = form.cleaned_data["typ"]
+                if typ in typy_dochod:
+                     post.dochod = True
+                post.save()
+		if wartosc == 'on':
+		    return HttpResponseRedirect("/history/aktualny")
+		else:
+		    return HttpResponseRedirect("/new")
+	    else:
+		return render(request, 'nowy_wydatek.html', {'form': form,'post':post, 'wynik':wynik})
+	else:
+	    return render(request, 'nowy_wydatek.html', {'form': form,'post':post, 'wynik':wynik})
+    else:
+        return HttpResponse('Prosze sie zalogowac!!')
+
+#wybor historii        
+def period_list(request):
+    daty = Baza_wydatkow.objects.values('okres').distinct()
+    return render(request, 'historia.html', {'daty': daty})
+
+#wyswietlnienie wybranego okresu
+# aktualny, lista_krotka, none, okres 
+def post_actual_period2(request, wybrany_okres=None):
+    username = None
+    if request.user.is_authenticated():
+         
+	if wybrany_okres == None:
+	    aktualny = 0
+	    aktualny_status = False
+	    
+	elif wybrany_okres == 'aktualny':
+	    aktualny = aktualny_okres()
+	    aktualny_status = True
+        else:
+	    aktualny = wybrany_okres
+	    aktualny_status = False
+	    
+        if aktualny != 0:
+	    wynik = Baza_wydatkow.objects.filter(okres = aktualny)
+	    if bool(wynik) == False:
+		return HttpResponse('''Brak danych dla tego okresu - dodaj nowy wpis aby utworzyc okres rozliczeniowy 
+		<button onclick="window.location.href = '/new'">OK</button>''')
+
+	username = str(request.user.username)
+	dane = {}
+        wynik = {}
+	tablica = []
+	tablica2 = []
+	suma = 0
+        typy = Typ_wydatku.objects.filter(dochod = False)
+        
+ 	if aktualny != 0:                 
+            przychod = str(Baza_wydatkow.objects.filter(okres= aktualny).filter(autor=request.user).filter(dochod = True).aggregate(Sum('cena')).values()[0])
+            if przychod == None:
+                 przychod = 0
+	    for opis in typy:
+	        dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(okres= aktualny).filter(autor=request.user).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+
+	else:
+            przychod = (Baza_wydatkow.objects.filter(okres= aktualny).filter(autor=request.user).filter(dochod = True).aggregate(Sum('cena')).values()[0])
+            if przychod == None:
+                 przychod = 0
+	    for opis in typy:
+	        dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+       
+        
+	for key, value in dane.iteritems():
+            if value == 'None':
+	        value = 0
+	    temp = float(value)
+	    suma = suma + temp
+	    tablica2.append(temp)
+	    tablica.append (key)
+	dane_wykres = { 'categories' : tablica , 'cat': tablica2}
+	wynik["Okres"] = aktualny
+	dane["Suma"] = int(suma)
+	wynik["Przychod"] = (przychod)
+	if (przychod>0) and (suma > 0):
+             	wynik["Procent"] = float(suma) * 100 / float(przychod)
+        if wybrany_okres == 'aktualny':
+            wynik["historia"] = 'False'
+	    posts=Baza_wydatkow.objects.filter(autor=request.user).filter(okres= aktualny).order_by('-id')
+	    wynik["ilosc_dni"] = ilosc_dni()
+	    wynik["numer_dnia"] = numer_dnia()
+	    if int(wynik["numer_dnia"]) > wynik["ilosc_dni"]:
+                wynik["ilosc_dni"] = wynik["numer_dnia"]
+            wynik["sredni_wydatek"] = int (dane["Suma"] / int(wynik["ilosc_dni"]))
+            wynik["sredni_wydatek_w_okresie_do_dzis"] = int (dane["Suma"] / int(wynik["numer_dnia"]))
+            wynik["przewidywane_wydatki_w_okresie"] = int (dane["Suma"] / (wynik["numer_dnia"])*(wynik["ilosc_dni"]))
+            wynik["data"] = poczatek_aktualnego_okresu()
+            wynik["suma"] = (Baza_wydatkow.objects.filter(autor=request.user).filter(okres= 'aktualny').aggregate(Sum('cena')).values()[0])
+            return render(request, 'lista_wydatkow.html', {'posts': posts, 'dane': dane, 'wynik':wynik, 'dane_wykres':dane_wykres })	
+	elif wybrany_okres == None:
+            wynik["historia"] = 'True' 
+	    posts=Baza_wydatkow.objects.filter(autor=request.user).order_by('-id')
+	    return render(request, 'lista_wydatkow.html', {'posts': posts, 'dane': dane, 'wynik':wynik, 'dane_wykres':dane_wykres })
+
+	else:
+            wynik["historia"] = 'True'
+	    posts=Baza_wydatkow.objects.filter(autor=request.user).filter(okres= aktualny).order_by('-id')
+	    return render(request, 'lista_wydatkow.html', {'posts': posts, 'dane': dane, 'wynik':wynik, 'dane_wykres':dane_wykres })	    
+    else:
+        return HttpResponse('Prosze sie zalogowac!!')
+
+def range_date(request):
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+    if start_date == "" or end_date == "":
+        return HttpResponse('''Podano nieprawidlowe dane <button onclick="window.location.href = '/period_list'">OK</button>''')
+    end_date = end_date + " 23:59:59"
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")  
+    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S") 
+    if start_date > end_date:
+	temp = end_date
+	end_date = start_date
+	start_date = temp
+    posts = Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date, end_date))
+    dane = {}
+    wynik = {}
+    tablica = []
+    tablica2 = []
+    suma = 0
+    typy = Typ_wydatku.objects.all()
+    #typy = Typ_wydatku.objects.filter(dochod = False)
+    for opis in typy:
+	dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date, end_date)).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+    for key, value in dane.iteritems():
+	if value == 'None':
+	    value = 0
+	temp = float(value)
+	suma = suma + temp
+	tablica2.append(temp)
+	tablica.append (key)
+	
+    dane_wykres = { 'categories' : tablica , 'cat': tablica2}
+    wynik["Okres"] = str(start_date) +" - "+ str(end_date)
+    dane["Suma"] = suma
+    wynik["historia"]= 'True'
+    return render(request, 'lista_wydatkow.html', {'posts': posts, 'dane': dane, 'wynik':wynik, 'dane_wykres':dane_wykres })
+    
+def minidlna_refresh(request):
+	w = call(["minidlnad", "-R"])
+	return HttpResponse('Baza danych MiniDLNA zaaktualizowana! Dodano {} nowych wpisow'.format(w))	
+	
+def question(request):
+    return render(request, 'question.html')
+
+def details(request, ids):
+    username = None
+    if request.user.is_authenticated():
+	detail = {}
+        username = request.user.username
+	instance = Baza_wydatkow.objects.get(id = ids, autor = request.user)
+	form = DetailForm(request.POST or None, instance = instance)
+	detail = instance
+	if form.is_valid():
+	    form = form.save(commit=False)
+	    typ = instance.typ
+	    okres = instance.okres
+	    nowy_typ = str(request.POST.get('nowy_typ'))
+	    nowy_okres = str(request.POST.get('nowy_okres'))
+	    if nowy_typ !='':
+	        form.typ = nowy_typ
+	    else:
+		form.typ = typ
+		
+	    if nowy_okres !='':		
+		form.okres = nowy_okres
+	    else:
+		form.okres = okres
+     	    form.save()
+	    return HttpResponseRedirect("/history")
+	else:
+	    return render(request, 'details.html', {'form': form, 'detail': detail})
+    else:
+        return HttpResponseRedirect("/login")
+
+def remove(request, ids):
+    Baza_wydatkow.objects.filter(id = ids).delete()
+    return HttpResponse('''Wpis usunieto <button onclick="window.location.href = '/history'">OK</button>''')
+  
+def range_date3(request):
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+    start_date1 = request.POST.get('start_date1')
+    end_date1 = request.POST.get('end_date1')
+    
+    if start_date == "" or end_date == "":
+        return HttpResponse('''Podano nieprawidlowe dane <button onclick="window.location.href = '/period_list'">OK</button>''')
+    end_date = end_date + " 23:59:59"
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")  
+    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S") 
+    if start_date > end_date:
+	temp = end_date
+	end_date = start_date
+	start_date = temp
+
+    if start_date1 == "" or end_date1 == "":
+        return HttpResponse('''Podano nieprawidlowe dane <button onclick="window.location.href = '/period_list'">OK</button>''')
+    end_date1 = end_date1 + " 23:59:59"
+    start_date1 = datetime.datetime.strptime(start_date1, "%Y-%m-%d")  
+    end_date1 = datetime.datetime.strptime(end_date1, "%Y-%m-%d %H:%M:%S") 
+    if start_date1 > end_date1:
+	temp = end_date1
+	end_date1 = start_date1
+	start_date1 = temp
+
+    typy = Typ_wydatku.objects.filter(typ = False)		
+    #typy = Typ_wydatku.objects.all()
+    dane = {}
+    dane1 = {}
+    wynik = {}
+    tablica = []
+    tablica2 = []
+    tablica3 = []
+    suma = 0
+    for opis in typy:
+	dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date, end_date)).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+	dane1 [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date1, end_date1)).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+    for key, value in dane.iteritems():
+	if value == 'None':
+	    value = 0
+	temp = float(value)
+	suma = suma + temp
+	tablica2.append(temp)
+	tablica.append (key)
+    dane["Suma"] = suma
+    suma = 0
+    for key, value in dane1.iteritems():
+	if value == 'None':
+	    value = 0
+	temp = float(value)
+	suma = suma + temp
+	tablica3.append(temp)
+    dane1["Suma"] = suma
+    dane_wykres = { 'categories' : tablica , 'cat': tablica2, 'cat2': tablica3}
+    wynik["Okres"] = str(start_date) + " " + str(end_date) + " do: " + str(start_date1) + " " + str(end_date1)
+    return render(request, 'lista_wydatkow_historia_porownanie.html', {'dane': dane, 'dane1': dane1, 'wynik':wynik, 'dane_wykres':dane_wykres })
+
+
+############################################333
+# funkcje testowe nie uzywane
+
+
+#requesty testowe
+def charts(request):
+    dane = {}
+    dane2 = {}
+    tablica = []
+    tablica2 = []
+    typy = Typ_wydatku.objects.all()
+    
+    for opis in typy:
+        dane2 [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(okres= aktualny_okres()).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+    for key, value in dane2.iteritems():
+        if value == 'None':
+	    value = 0
+	temp = float(value)
+	tablica2.append(temp)
+	tablica.append (key)
+    dane = { 'categories' : tablica , 'cat': tablica2}
+    return render(request, 'charts.html', dane)
+
+def test(request):
+    wartosc = request.POST.get('your_name')
+    wartosc2 = request.POST.get('your_name2')
+    wynik = wartosc + wartosc2
+    return HttpResponse(wynik)
+    
+def set_date(request):
+    return HttpRedirect("/name")
+
+def range_date_function (start_date, end_date):
+    #start_date = request.POST.get('start_date')
+    #end_date = request.POST.get('end_date')
+    #if start_date == "" or end_date == "":
+    #    return HttpResponse('''Podano nieprawidlowe dane <button onclick="window.location.href = '/period_list'">OK</button>''')
+
+    end_date = end_date + " 23:59:59"
+    start_date = datetime.datetime.strptime(start_date, "%Y-%m-%d")  
+    end_date = datetime.datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S") 
+    if start_date > end_date:
+	temp = end_date
+	end_date = start_date
+	start_date = temp
+	
+    posts = Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date, end_date))
+    dane = {}
+    wynik = {}
+    tablica = []
+    tablica2 = []
+    suma = 0
+    typy = Typ_wydatku.objects.all()
+    for opis in typy:
+	dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(data_utworzenia__range=(start_date, end_date)).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+    for key, value in dane.iteritems():
+	if value == 'None':
+	    value = 0
+	temp = float(value)
+	suma = suma + tem
+	tablica2.append(temp)
+	tablica.append (key)
+    dane_wykres = { 'categories' : tablica , 'cat': tablica2}
+    wynik["Okres"] = str(start_date) +" - "+ str(end_date)
+    dane["Suma"] = suma
+    return tablica, tablica2, wynik, dane
+
+def add_user(request):
+    if request.method == "POST":
+        form = UserForm(request.POST)
+        if form.is_valid():
+            new_user = User.objects.create_user(**form.cleaned_data)
+            #login(new_user)
+            # redirect, or however you want to get to the main view
+            return HttpResponse('Uzytkownik utworzony - zaloguj sie')
+    else:
+        form = UserForm() 
+
+    return render(request, 'adduser.html', {'form': form}) 
+'''
+def post_all_list(request):
+    username = None
+    if request.user.is_authenticated():
+        username = request.user.username
+        posts=Baza_wydatkow.objects.filter(autor=request.user).order_by('id')
+        dane = {}
+        wynik = {}
+	tablica = []
+	tablica2 = []
+	suma = 0
+        typy = Typ_wydatku.objects.all()
+        for opis in typy:
+            dane [opis.nazwa_skrocona] = str(Baza_wydatkow.objects.filter(autor=request.user).filter(typ = opis.nazwa_wydatku).aggregate(Sum('cena')).values()[0])
+        for key, value in dane.iteritems():
+           if value == 'None':
+	        value = 0
+	    temp = float(value)
+	    suma = suma + temp
+	    tablica2.append(temp)
+	    tablica.append (key)
+        dane_wykres = { 'categories' : tablica , 'cat': tablica2}
+	wynik["Okres"] = 'wszystkie zarejstrowane wydatki'
+        dane["Suma"] = suma
+        wynik["historia"] = 'True'
+        return render(request, 'lista_wydatkow_historia.html', {'posts': posts, 'dane': dane, 'wynik':wynik, 'dane_wykres':dane_wykres })
+    else:
+        return HttpResponse('Prosze sie zalogowac!!'),
+'''

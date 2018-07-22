@@ -1,0 +1,39 @@
+{% extends "budzet.html"%}
+{%block title%}
+Nowy wydatek
+{% endblock %}
+{% block header %}
+<h2><span class="label label-primary">Potwierdz zakonczenie okresu</span></h2>
+{% endblock %}
+{% block content %}
+ </br>   	
+Czy napewno zakonczyc aktualny okres ?  
+</br>
+</br>
+<table class="table table-condensed">
+<tr>
+        <td>Wolne srodki: </td>
+        <td>{{wynik.wolne_srodki}} PLN</td>
+</tr>
+        <td>Dodchody w zamykanym okresie:</td>
+        <td>{{wynik.przychod}} PLN</td>
+</tr>
+        <td>Wydatki w aktualnym okresie:</td>
+        <td>{{wynik.wydatki}} PLN</td>
+</tr>
+        <td>Oszczednosci w aktualnym okresie: </td>
+        <td>{{wynik.oszczednosci}} PLN</td>
+</tr>
+Jezeli dane nie sa zgodne z rzeczywistoscia klinij Nie i wprowadz korekty w danych wejsciowych
+</table>
+
+</br>
+</br> 
+<button onclick="window.location.href = '/end_period'">Tak</button>
+<button onclick="window.location.href = '/new'">Nie - dodaj wydatek lub dochod</button>
+<button onclick="window.location.href = '/history/aktualny/'">Nie - edytuj dane</button>
+{% endblock %}
+{% block footer %}
+user: {{request.user.username}} 
+{% endblock %}
+

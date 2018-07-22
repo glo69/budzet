@@ -1,0 +1,48 @@
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow
+{% endblock %}
+{% block header %}
+user: {{request.user.username}}  
+{% endblock %}
+{% block content %}
+    
+<h2><span class="label label-danger">lista wydatkow za okres {{wynik.Okres}}</span></h2>
+
+<table border="1">  
+{% for value, value2 in dane.iteritems %}
+<tr>
+		<td>{{value}}</td>
+		<td>{{ value2}}</td>
+		
+</tr>
+{% endfor %}
+</table>
+	
+
+Ilosc dni w okresie {{ wynik.ilosc_dni }} <br/>
+Numer dnia w okresie {{wynik.numer_dnia}} <br/>
+Sredni dzienny wydatek w bierzacym okresie do dnia dzisiejszego = {{wynik.sredni_wydatek_w_okresie_do_dzis}} PLN <br/>
+Prognozowane wydatki w okresie {{ wynik.przewidywane_wydatki_w_okresie }} PLN <br/>
+<div id="chart_container" style="width:60%; height:400px;"></div>
+<!--javascript for charts
+-->
+<script>
+$(function () {
+$('#chart_container').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Struktura wydatkow'},
+xAxis: {
+categories: [ '{{ dane_wykres.categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+series: [{name: 'Wydatki', 
+data:[{{ dane_wykres.cat|join:","}}]
+}]
+});
+});
+</script>
+
+<button onclick="window.location.href = '/history/aktualny'">Pokaz szczegolowo okres</button>
+{% endblock %}
+    
+

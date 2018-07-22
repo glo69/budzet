@@ -1,0 +1,40 @@
+
+<html>
+<head>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+</head>
+<body>
+{% extends "budzet.html"%}
+{%block title%}
+lista wydatkow
+{% endblock %}
+{% block header %}
+user: {{request.user.username}}  
+{% endblock %}
+{% block content %}
+<div id="chart_container" style="width:70%; height:400px;"></div>
+
+</body>
+
+<!--javascript for charts
+-->
+<script>
+$(function () {
+$('#chart_container').highcharts({
+chart: {type: 'bar'},
+title: {text: 'Struktura wydatkow'},
+xAxis: {
+categories: [ '{{ categories|join:"','" }}']},
+yAxis: {title: {text: 'PLN'}},
+series: [{name: 'Wydatki', 
+data:[{{ cat|join:","}}]
+}]
+});
+});
+</script>
+
+</body>
+{% endblock %}
+</html>
+
